@@ -44,9 +44,9 @@ class BaseAppBar extends StatelessWidget implements PreferredSizeWidget {
             isBack ? Navigator.pop(context) : buttonDialog();
           },
           child: const Icon(
-            CupertinoIcons.arrowshape_turn_up_left_fill,
-            color: Colors.grey,
-            size: 20,
+            CupertinoIcons.arrow_left,
+            color: Colors.white,
+            size: 30,
           )
       ),
     );
