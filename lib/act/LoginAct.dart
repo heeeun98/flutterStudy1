@@ -247,6 +247,10 @@ class _SignUpPageState extends State<SignUpPage> {
   List<Country> countries = [];
   Country firstSelectCountry = Country();
   int firstSelectIndex = 0;
+  List<String> genders = ["female", "mail", "custom"];
+  String firstSelectGender = "female";
+  int firstSelectIndexGender = 0;
+
 
   @override
   void initState() {
@@ -305,6 +309,7 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     Color focusColor = Theme.of(context).primaryColor;
+    bool isSelect = true;
     return SingleChildScrollView(
       child: Container(
         padding: const EdgeInsets.only(top: 80, left: 20, right: 20, bottom: 0),
@@ -346,26 +351,37 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
               TextFormButtonWidget(
                 title: "Country",
-                textEditingController: _countryController,
-                firstSelectedCountry: firstSelectCountry.korCommon,
+                firstSelectedCountry: firstSelectCountry.engCommon,
                 voidCallback: () {
-                 List<Country> list = [];
-                 for (var country in countries) {list.add(country);}
+                 List<String> list = [];
+                 for (var country in countries) {list.add(country.engCommon);}
+
                  ShowCupertinoModalPopupWidget()._showActionSheet(context, "Country", list, firstSelectIndex, (index) {
-                   setState(() {
-                     firstSelectCountry = countries[index];
-                     firstSelectIndex = index;
-                   });
-                 });
+                   firstSelectCountry = countries[index];
+                   firstSelectIndex = index;
+                   }, () {
+                   Navigator.pop(context);
+                   setState(() {});
+                 }
+                 );
                 },
               ),
-              TextFormFieldWidget(
-                  title: "Gender",
-                  content: gender,
-                  hintText: "Please enter your gender",
-                  validateMessage: "No gender entered.",
-                  obscureText: false,
-                  textEditingController: _genderController
+              TextFormButtonWidget(
+                title: "Gender",
+                firstSelectedCountry: firstSelectGender,
+                voidCallback: () {
+                  // List<String> list = [];
+                  // for (var gender in genders) {list.add(gender);}
+
+                  ShowCupertinoModalPopupWidget()._showActionSheet(context, "Gender", genders, firstSelectIndexGender, (index) {
+                    firstSelectGender = genders[index];
+                    firstSelectIndexGender = index;
+                  }, () {
+                    Navigator.pop(context);
+                    setState(() {});
+                  }
+                  );
+                },
               ),
               Container(
                 alignment: Alignment.centerLeft,
@@ -547,16 +563,14 @@ class _TextFormFieldWidgetState extends State<TextFormFieldWidget> {
 
 // 밑에서 올라오는 위젯
 class TextFormButtonWidget extends StatefulWidget {
-  final String title;
-  final TextEditingController textEditingController;
-  final String firstSelectedCountry;
-  final VoidCallback voidCallback;
+  String title;
+  String firstSelectedCountry;
+  VoidCallback voidCallback;
 
-  const TextFormButtonWidget({
+  TextFormButtonWidget({
     Key? key,
     required this.title,
     required this.firstSelectedCountry,
-    required this.textEditingController,
     required this.voidCallback
   }) : super(key: key);
 
@@ -565,11 +579,9 @@ class TextFormButtonWidget extends StatefulWidget {
 }
 
 class _TextFormButtonWidgetState extends State<TextFormButtonWidget> {
-  bool isSelected = false;
-
   @override
   Widget build(BuildContext context) {
-    Color focusColor = Theme.of(context).primaryColor;
+    Color whiteColor = Colors.white;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,7 +590,7 @@ class _TextFormButtonWidgetState extends State<TextFormButtonWidget> {
         SizedBox(
           width: double.infinity,
           child: Text(widget.title, style: TextStyle(
-              color: isSelected ? focusColor : Colors.white,
+              color: whiteColor,
               fontSize: 14,
               letterSpacing: 0.6
           )
@@ -590,11 +602,10 @@ class _TextFormButtonWidgetState extends State<TextFormButtonWidget> {
           child: SizedBox(
             width: double.infinity,
             child: Container(
-              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: isSelected ? focusColor : Colors.black45, width: 1.2))),
+              decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.black45, width: 1.2))),
               child: TextButton(
                 style: TextButton.styleFrom(padding: const EdgeInsets.all(0), alignment: Alignment.centerLeft),
                 onPressed: () {
-                  setState(() => isSelected = !isSelected);
                   widget.voidCallback();
                 },
                 child: Text(widget.firstSelectedCountry, style: const TextStyle(color: Colors.white)),
@@ -608,10 +619,11 @@ class _TextFormButtonWidgetState extends State<TextFormButtonWidget> {
 }
 
 class ShowCupertinoModalPopupWidget {
-  void _showActionSheet(BuildContext context, String title, List contents, int firstCountryIndex, ListCallback listCallback) {
+  void _showActionSheet(BuildContext context, String title, List contents, int firstCountryIndex, ListCallback listCallback, VoidCallback voidCallback) {
     Color focusColor = Theme.of(context).primaryColor;
     Color canvasColor = Theme.of(context).canvasColor;
     Color greyColor = Colors.grey;
+    double deviceHeight = MediaQuery.of(context).size.height;
 
     showCupertinoModalPopup(
         context: context,
@@ -619,7 +631,7 @@ class ShowCupertinoModalPopupWidget {
           return Material(
               child: Container(
                 color: canvasColor,
-                height: 400,
+                height: deviceHeight * 0.4,
                 width: double.infinity,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -638,17 +650,15 @@ class ShowCupertinoModalPopupWidget {
                     Expanded(     // 제목
                       flex: 1,
                       child: Container(
-                        height: 100,
                         width: double.infinity,
-                        alignment: Alignment.center,
+                        alignment: Alignment.topCenter,
                         padding: const EdgeInsets.only(top: 30),
-                        child: Text(title, style: const TextStyle(fontSize: 30, color: Colors.white, letterSpacing: 1.2)),
+                        child: Text(title, style: const TextStyle(fontSize: 20, color: Colors.white, letterSpacing: 1.2)),
                       ),
                     ),
                     Expanded(     // 내용
                       flex: 2,
                       child: SizedBox(
-                        height: 200,
                         child: CupertinoPicker(
                           useMagnifier: true,
                           scrollController: FixedExtentScrollController(initialItem: firstCountryIndex),
@@ -659,7 +669,7 @@ class ShowCupertinoModalPopupWidget {
                           children: contents.map((l) =>
                               Container(
                                   alignment: Alignment.center,
-                                  child: Text(l.korCommon, style: const TextStyle(color: Colors.white, fontSize: 25, letterSpacing: 1.2))
+                                  child: Text(l, style: const TextStyle(color: Colors.white, fontSize: 15, letterSpacing: 1.2))
                               )
                           ).toList(),
                         ),
@@ -668,7 +678,7 @@ class ShowCupertinoModalPopupWidget {
                     Expanded(     // 취소 확인 버튼
                         flex: 1,
                         child: Container(
-                          padding: const EdgeInsets.only(top: 20, bottom: 20, left: 10, right: 10),
+                          padding: const EdgeInsets.only(top: 10, bottom: 10, left: 10, right: 10),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
@@ -677,8 +687,9 @@ class ShowCupertinoModalPopupWidget {
                                 child: Container(
                                   color: greyColor,
                                   child: TextButton(
+                                      style: TextButton.styleFrom(padding: EdgeInsets.zero),
                                       onPressed: () => Navigator.pop(context),
-                                      child: const Text("Back", style: TextStyle(fontSize: 20, color: Colors.white, letterSpacing: 1.2),)
+                                      child: const Text("Back", style: TextStyle(fontSize: 15, color: Colors.white, letterSpacing: 1.2),)
                                   ),
                                 ),
                               ),
@@ -688,8 +699,11 @@ class ShowCupertinoModalPopupWidget {
                                 child: Container(
                                   color: focusColor,
                                   child: TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text("Confirm", style: TextStyle(fontSize: 20, color: Colors.white, letterSpacing: 1.2),)
+                                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                                      onPressed: () {
+                                        voidCallback();
+                                      },
+                                      child: const Text("Confirm", style: TextStyle(fontSize: 15, color: Colors.white, letterSpacing: 1.2),)
                                   ),
                                 ),
                               ),
