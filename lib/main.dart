@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:heeeun/act/SettingAct.dart';
 
 typedef VoidCallback = void Function();
+typedef VoidCallbackCheckBox = void Function(bool value);
+typedef ListCallback = void Function(int index);
 
 void main() {
   runApp(const MyApp());
