@@ -1,10 +1,12 @@
 
 // 국가정보
+import '../util/Constants.dart';
+
 class Country {
   int seqId = 0;
-  String code = "";
-  String engCommon = "";
-  String korCommon = "";
+  String code = emptyString;
+  String engCommon = emptyString;
+  String korCommon = emptyString;
 
   // Country(this.seqId, this.code, this.engCommon, this.korCommon);
   Country();

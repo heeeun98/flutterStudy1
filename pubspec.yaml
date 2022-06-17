@@ -32,6 +32,13 @@ dependencies:
   country_codes: ^2.2.0
   # loader overlay
   loader_overlay: ^2.0.7
+  # cached_network_image
+  cached_network_image: ^3.2.1
+  # extended_image
+  extended_image: ^6.2.1
+  # loading_gifs
+  loading_gifs: ^0.3.0
+
 
   # json_serializable 버전 안맞아서 지금 사용 못함
 #  json_annotation: ^2.0.0

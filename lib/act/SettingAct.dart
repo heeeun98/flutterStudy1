@@ -2,11 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:heeeun/act/FaqAct.dart';
 import 'package:heeeun/act/LoginAct.dart';
+import 'package:heeeun/act/ProfileAct.dart';
 
 import '../util/BaseAppBar.dart';
 
 enum MenuType {
-  faq, noPage, loginAndSignUp
+  faq, noPage, loginAndSignUp, profile
 }
 
 class SettingAct extends StatelessWidget {
@@ -14,6 +15,7 @@ class SettingAct extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color primaryColor = Theme.of(context).primaryColor;
 
     // 버튼 눌렀을때 창뜨는거
     void buttonDialog() {
@@ -61,6 +63,8 @@ class SettingAct extends StatelessWidget {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => const FaqAct()));
                 } else if (menuType == MenuType.loginAndSignUp) {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginAct()));
+                } else if(menuType == MenuType.profile) {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileAct()));
                 } else {
                   buttonDialog();
                 }
@@ -77,9 +81,9 @@ class SettingAct extends StatelessWidget {
                   const Spacer(),
                   Container(
                     alignment: Alignment.center,
-                    child: const Icon(
+                    child: Icon(
                       CupertinoIcons.chevron_forward,
-                      color: Colors.white,
+                      color: menuType == MenuType.noPage ? Colors.white : primaryColor,
                       size: 20,
                     ),
                   )
@@ -106,6 +110,7 @@ class SettingAct extends StatelessWidget {
               menuContainer("Artist Information", MenuType.noPage),
               menuContainer("Language", MenuType.noPage),
               menuContainer("Login & Sign up", MenuType.loginAndSignUp),
+              menuContainer("Profile", MenuType.profile),
               // Preferences
               titleContainer("Preferences"),
               menuContainer("Notification", MenuType.noPage),
