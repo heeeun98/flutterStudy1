@@ -38,6 +38,8 @@ dependencies:
   extended_image: ^6.2.1
   # loading_gifs
   loading_gifs: ^0.3.0
+  # zoom_pinch_overlay
+  zoom_pinch_overlay: ^1.2.0
 
 
   # json_serializable 버전 안맞아서 지금 사용 못함
