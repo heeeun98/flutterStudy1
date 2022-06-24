@@ -1,12 +1,12 @@
 
 import 'dart:convert';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:heeeun/model/User.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:heeeun/model/UserPost.dart';
+import 'package:intl/intl.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:zoom_pinch_overlay/zoom_pinch_overlay.dart';
 
@@ -24,6 +24,9 @@ class _ProfileActState extends State<ProfileAct> {
   final ScrollController _scrollController = ScrollController();
   String appBarTitle = "Profile";
   final String userId = "e8d192ca-bf02-45ff-b0ea-961b4d84a671";
+  int pageCnt = 1;
+  List<UserPost> userPosts = [];
+  int postCnt = 1;
 
   @override
   void initState() {
@@ -35,6 +38,8 @@ class _ProfileActState extends State<ProfileAct> {
       });
     });
     getUser();
+    getUserPost();
+    pageCnt;
   }
 
 
@@ -66,16 +71,53 @@ class _ProfileActState extends State<ProfileAct> {
     setState(() {});
   }
 
+  // 유저 Post 조회 통신
+  getUserPost() async {
+    var dio = Dio(
+        BaseOptions(
+            baseUrl: "https://pietaserver.azurewebsites.net",
+            connectTimeout: 800000,   // 서버로부터 응답받을때까지의 시간을 의미함. 설정 시간을 초과할 경우 connectTimeout Exception 발생
+            receiveTimeout: 800000    // 서버로부터 응답을 스트리밍? 으로 받는 중에 연결 지속시간을 의미. 연결 지속시간이 초과될 경우 receiveTimeout Exception 발생. ex) 파일다운로드
+        )
+    );
+
+    var response = await dio.get("/post/$userId", queryParameters: {"page": pageCnt});
+
+    if(response.statusCode == 200) {
+      Map userPostMap = jsonDecode(response.toString());
+      postCnt = userPostMap["post_count"];
+
+      if(userPostMap["list"] != null) {
+        userPostMap["list"].forEach((element) {
+          UserPost userPost = UserPost.fromJson(element);
+          userPosts.add(userPost);
+        });
+      }
+    }
+    setState(() {});
+  }
+
   TabBar get _tabBar => TabBar(
     tabs: tabs.map((e) =>
-          Tab(text: e)
+      Tab(
+        child: Column(
+          children: [
+            const SizedBox(height: 4),
+            Text(e, style: const TextStyle(fontWeight: FontWeight.w600),),
+            const SizedBox(height: 6,),
+            Text(e == "Post" ? postCnt.toString() : 0.toString(), style: const TextStyle(fontWeight: FontWeight.w600),)
+          ],
+        ),
+      )
       ).toList(),
+    labelColor: Colors.redAccent,
     indicator: BoxDecoration(
         border: Border(bottom: BorderSide(width: 2, color: Theme.of(context).primaryColor)),
         color: Theme.of(context).canvasColor
     ),
     labelStyle: const TextStyle(fontSize: 15, letterSpacing: 0.6, fontWeight: FontWeight.bold),
     unselectedLabelStyle: const TextStyle(fontSize: 15, letterSpacing: 0.6),
+    unselectedLabelColor: Colors.grey,
   );
 
   @override
@@ -97,7 +139,6 @@ class _ProfileActState extends State<ProfileAct> {
                 SliverOverlapAbsorber(
                   handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                   sliver: SliverAppBar(
-                    // toolbarHeight: 30,
                     centerTitle: true,
                     backgroundColor: canvasColor,
                     pinned: true,   // 고정
@@ -156,11 +197,11 @@ class _ProfileActState extends State<ProfileAct> {
             body: TabBarView(
                 children: tabs.map((e) {
                   if(e == "Post") {
-                    return UserPostPage(userId: userId);
+                    return UserPostPage(userId: userId, userPosts: userPosts,);
                   } else if (e == "NFT"){
-                    return UserPostPage(userId: userId);
+                    return NftPage();
                   } else {      // Deal
-                    return UserPostPage(userId: userId);
+                    return NftPage();
                   }
                 }).toList()
             ),
@@ -361,10 +402,12 @@ class _FollowButtonWidgetState extends State<FollowButtonWidget> {
   }
 }
 
+// Post 페이지
 class UserPostPage extends StatefulWidget {
-  UserPostPage({Key? key, required this.userId}) : super(key: key);
+  const UserPostPage({Key? key, required this.userId, required this.userPosts}) : super(key: key);
 
   final String userId;
+  final List userPosts;
 
   @override
   State<UserPostPage> createState() => _UserPostPageState();
@@ -373,13 +416,10 @@ class UserPostPage extends StatefulWidget {
 class _UserPostPageState extends State<UserPostPage> {
   final RefreshController _refreshController = RefreshController(initialRefresh: false);
 
-  int pageCnt = 1;
-  List<UserPost> userPosts = [];
-
   @override
   void initState() {
     super.initState();
-    getUserPost();
+    // getUserPost();
   }
 
   @override
@@ -397,45 +437,37 @@ class _UserPostPageState extends State<UserPostPage> {
     _refreshController.loadComplete();
   }
 
-  getUserPost() async {
-    var dio = Dio(
-        BaseOptions(
-            baseUrl: "https://pietaserver.azurewebsites.net",
-            connectTimeout: 800000,   // 서버로부터 응답받을때까지의 시간을 의미함. 설정 시간을 초과할 경우 connectTimeout Exception 발생
-            receiveTimeout: 800000    // 서버로부터 응답을 스트리밍? 으로 받는 중에 연결 지속시간을 의미. 연결 지속시간이 초과될 경우 receiveTimeout Exception 발생. ex) 파일다운로드
-        )
-    );
-
-    var response = await dio.get("/post/${widget.userId}", queryParameters: {"page": pageCnt});
-
-    if(response.statusCode == 200) {
-      Map userPostMap = jsonDecode(response.toString());
-
-      if(userPostMap["list"] != null) {
-        userPostMap["list"].forEach((element) {
-          UserPost userPost = UserPost.fromJson(element);
-          userPosts.add(userPost);
-        });
-      }
-    }
-    setState(() {});
-  }
+  // getUserPost() async {
+  //   var dio = Dio(
+  //       BaseOptions(
+  //           baseUrl: "https://pietaserver.azurewebsites.net",
+  //           connectTimeout: 800000,   // 서버로부터 응답받을때까지의 시간을 의미함. 설정 시간을 초과할 경우 connectTimeout Exception 발생
+  //           receiveTimeout: 800000    // 서버로부터 응답을 스트리밍? 으로 받는 중에 연결 지속시간을 의미. 연결 지속시간이 초과될 경우 receiveTimeout Exception 발생. ex) 파일다운로드
+  //       )
+  //   );
+  //
+  //   var response = await dio.get("/post/${widget.userId}", queryParameters: {"page": pageCnt});
+  //
+  //   if(response.statusCode == 200) {
+  //     Map userPostMap = jsonDecode(response.toString());
+  //
+  //     if(userPostMap["list"] != null) {
+  //       userPostMap["list"].forEach((element) {
+  //         UserPost userPost = UserPost.fromJson(element);
+  //         userPosts.add(userPost);
+  //       });
+  //     }
+  //   }
+  //   setState(() {});
+  // }
 
   @override
   Widget build(BuildContext context) {
-    Color focusColor = Theme.of(context).primaryColor;
-    Color canvasColor = Theme.of(context).canvasColor;
-
-    double deviceHeight = MediaQuery.of(context).size.height;
-    double deviceWidth = MediaQuery.of(context).size.width;
-    double posi = deviceHeight * 0.65;
-
     // InkWell, GestureDetector: Gesture 을 감지할 수 없는 widget 에게 Gesture 기능을 부여할 수 있는 위젯
     // Gesture: 사용자의 동작(클릭, 터블 클릭, 오래누르기 등) 을 감지하는 것
 
     return Container(
       padding: const EdgeInsets.only(left: 10, right: 10, top: 130),
-      // color: canvasColor,
       width: double.infinity,
       child: SmartRefresher(
         controller:
@@ -445,7 +477,7 @@ class _UserPostPageState extends State<UserPostPage> {
         onRefresh: _onRefresh,
         onLoading: _onLoading,
         child: ListView.builder(
-            itemCount: userPosts.length,
+            itemCount: widget.userPosts.length,
             itemBuilder: (context, index) {
               return Container(
                 // color: Colors.blue,
@@ -459,73 +491,80 @@ class _UserPostPageState extends State<UserPostPage> {
                         child: Stack(
                           children: [
                             ExtendedImage.network(
-                              userPosts[index].artThumbnail,
+                              widget.userPosts[index].artThumbnail,
                               fit: BoxFit.cover,
                               width: 700,
                               height: 800,
                             ),
+                            Container(
+                              width: 700,
+                              height: 800,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                    colors: [Colors.transparent, Colors.transparent, Colors.transparent, Theme.of(context).shadowColor],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter),
+                              ),
+                            ),
                             Positioned(
-                                top: 630,
+                                top: 650,
                                 left: 20,
                                 child: IntrinsicWidth(
                                   child: Container(
-                                    // color: Colors.blue,
                                     width: 650,
                                     child: Column(
                                       children: [
                                         Container(
-                                          alignment: Alignment.centerLeft,
-                                          child: Text(userPosts[index].postTitle, style: const TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.w800)),
+                                          padding: EdgeInsets.only(left: 15),
+                                          alignment: Alignment.bottomLeft,
+                                          child: Text(widget.userPosts[index].postTitle, style: const TextStyle(fontSize: 35, color: Colors.white, fontWeight: FontWeight.w600)),
                                         ),
                                         Container(
                                           width: double.infinity,
-                                          // color: Colors.green,
                                           child: Row(
                                             children: [
-                                              Container(
-                                                child: TextButton(
-                                                    onPressed: () {},
-                                                    child: Container(
-                                                        child: Row(
-                                                          children: [
-                                                            Icon(Icons.favorite_border, color: Colors.white, size: 18,),
-                                                            SizedBox(width: 5,),
-                                                            Text(userPosts[index].postLikeCnt.toString(), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400))
-                                                          ],
-                                                        )
-                                                    )
-                                                ),
+                                              TextButton(
+                                                  onPressed: () {},
+                                                  child: Row(
+                                                    children: [
+                                                      const Icon(Icons.favorite_border, color: Colors.white, size: 18,),
+                                                      const SizedBox(width: 5,),
+                                                      Text(widget.userPosts[index].postLikeCnt.toString(), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400))
+                                                    ],
+                                                  )
                                               ),
                                               TextButton(
                                                   onPressed: () {},
-                                                  child: Container(
-                                                      child: Row(
-                                                        children: [
-                                                          Icon(Icons.comment, color: Colors.white, size: 18,),
-                                                          SizedBox(width: 5,),
-                                                          Text(userPosts[index].postCommentCnt.toString(), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400))
-                                                        ],
-                                                      )
+                                                  child: Row(
+                                                    children: [
+                                                      const Icon(Icons.comment, color: Colors.white, size: 18,),
+                                                      const SizedBox(width: 5,),
+                                                      Text(widget.userPosts[index].postCommentCnt.toString(), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400))
+                                                    ],
                                                   )
                                               ),
-                                              Spacer(),
+                                              const Spacer(),
                                               Container(
-                                                // color: Colors.red,
+                                                padding: EdgeInsets.only(right: 15),
                                                 alignment: Alignment.centerRight,
-                                                child: Text(userPosts[index].postDate),
+                                                child: Text(DateFormat("MM월 dd일").format(DateTime.parse(widget.userPosts[index].postDate)), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400)),
                                               )
                                             ],
                                           )
-
                                         ),
+                                        Container(
+                                          height: 1, width: 620, color: Colors.white,
+                                        ),
+                                        Container(
+                                          padding: EdgeInsets.only(left: 15, top: 10),
+                                          alignment: Alignment.bottomLeft,
+                                          child: Text(widget.userPosts[index].postContent, style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w500),),
+                                        )
                                       ],
                                     ),
                                   ),
-
                                 )
-
-
-                            )
+                            ),
                           ],
                         )
                     )
@@ -537,4 +576,19 @@ class _UserPostPageState extends State<UserPostPage> {
     );
   }
 }
+
+class NftPage extends StatefulWidget {
+  const NftPage({Key? key}) : super(key: key);
+
+  @override
+  State<NftPage> createState() => _NftPageState();
+}
+
+class _NftPageState extends State<NftPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Container();
+  }
+}
+
 
