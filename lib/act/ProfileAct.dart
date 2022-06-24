@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:heeeun/model/User.dart';
 import 'package:extended_image/extended_image.dart';
+import 'package:heeeun/model/UserPost.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:zoom_pinch_overlay/zoom_pinch_overlay.dart';
 
@@ -44,7 +45,7 @@ class _ProfileActState extends State<ProfileAct> {
   }
 
   // 유저 조회 api 통신
-  void getUser() async {
+  getUser() async {
     var dio = Dio(
         BaseOptions(
             baseUrl: "https://pietaserver.azurewebsites.net",
@@ -57,6 +58,7 @@ class _ProfileActState extends State<ProfileAct> {
 
     if(response.statusCode == 200) {
       Map responseMap = jsonDecode(response.toString());
+
       if(responseMap["list"] != null) {
         user = User.fromJson(responseMap["list"]);
       }
@@ -83,11 +85,6 @@ class _ProfileActState extends State<ProfileAct> {
     double deviceHeight = MediaQuery.of(context).size.height;
     double deviceWidth = MediaQuery.of(context).size.width;
     double expandedHeight = deviceHeight * 0.35;
-
-    // String appBarText = _scrollController.offset > 250 ? user.name : "Profile";
-
-
-
 
     return DefaultTabController(
         length: tabs.length,
@@ -220,18 +217,13 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                        height: 80,
-                        width: 80,
-                        child: ExtendedImage.network(
-                          widget.thumbnail,
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.fill,
-                          // cache: true,
-                          border: Border.all(color: Colors.white),
-                          shape: BoxShape.circle,
-                        )
+                    ExtendedImage.network(
+                      widget.thumbnail,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.fill,
+                      border: Border.all(color: Colors.white),
+                      shape: BoxShape.circle,
                     ),
                   ],
                 ),
@@ -382,10 +374,17 @@ class _UserPostPageState extends State<UserPostPage> {
   final RefreshController _refreshController = RefreshController(initialRefresh: false);
 
   int pageCnt = 1;
+  List<UserPost> userPosts = [];
 
   @override
   void initState() {
     super.initState();
+    getUserPost();
+  }
+
+  @override
+  void dispose() {
+   super.dispose();
   }
 
   void _onRefresh() async {
@@ -406,10 +405,20 @@ class _UserPostPageState extends State<UserPostPage> {
             receiveTimeout: 800000    // 서버로부터 응답을 스트리밍? 으로 받는 중에 연결 지속시간을 의미. 연결 지속시간이 초과될 경우 receiveTimeout Exception 발생. ex) 파일다운로드
         )
     );
-    
-    var response = await dio.get("/post/${widget.userId}/page/$pageCnt");
 
+    var response = await dio.get("/post/${widget.userId}", queryParameters: {"page": pageCnt});
 
+    if(response.statusCode == 200) {
+      Map userPostMap = jsonDecode(response.toString());
+
+      if(userPostMap["list"] != null) {
+        userPostMap["list"].forEach((element) {
+          UserPost userPost = UserPost.fromJson(element);
+          userPosts.add(userPost);
+        });
+      }
+    }
+    setState(() {});
   }
 
   @override
@@ -417,35 +426,110 @@ class _UserPostPageState extends State<UserPostPage> {
     Color focusColor = Theme.of(context).primaryColor;
     Color canvasColor = Theme.of(context).canvasColor;
 
+    double deviceHeight = MediaQuery.of(context).size.height;
+    double deviceWidth = MediaQuery.of(context).size.width;
+    double posi = deviceHeight * 0.65;
+
     // InkWell, GestureDetector: Gesture 을 감지할 수 없는 widget 에게 Gesture 기능을 부여할 수 있는 위젯
     // Gesture: 사용자의 동작(클릭, 터블 클릭, 오래누르기 등) 을 감지하는 것
 
     return Container(
-      padding: EdgeInsets.only(top: 20, left: 10, right: 10),
+      padding: const EdgeInsets.only(left: 10, right: 10, top: 130),
       // color: canvasColor,
       width: double.infinity,
       child: SmartRefresher(
         controller:
-            _refreshController,
+        _refreshController,
         enablePullDown: true,
         enablePullUp: true,
         onRefresh: _onRefresh,
         onLoading: _onLoading,
         child: ListView.builder(
-            itemCount: 1,
+            itemCount: userPosts.length,
             itemBuilder: (context, index) {
-              return InkWell(
-                onTap: () { print("POST 상세 클릭함");},
-                child: ZoomOverlay(
-                    minScale: 0.5,
-                    maxScale: 3.0,
-                    twoTouchOnly: true,
-                    child: ExtendedImage.network(
-                      "https://sqlva6ss7nz5uarf2w.blob.core.windows.net/e8d192ca-bf02-45ff-b0ea-961b4d84a671/Thumbnail20220421_075223236.jpg",
-                      // width: 100,
-                      // height: 100,
+              return Container(
+                // color: Colors.blue,
+                padding: const EdgeInsets.only(bottom: 30),
+                child: InkWell(
+                    onTap: () { print("POST 상세 클릭함");},
+                    child: ZoomOverlay(
+                        minScale: 0.5,
+                        maxScale: 3.0,
+                        twoTouchOnly: true,
+                        child: Stack(
+                          children: [
+                            ExtendedImage.network(
+                              userPosts[index].artThumbnail,
+                              fit: BoxFit.cover,
+                              width: 700,
+                              height: 800,
+                            ),
+                            Positioned(
+                                top: 630,
+                                left: 20,
+                                child: IntrinsicWidth(
+                                  child: Container(
+                                    // color: Colors.blue,
+                                    width: 650,
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(userPosts[index].postTitle, style: const TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.w800)),
+                                        ),
+                                        Container(
+                                          width: double.infinity,
+                                          // color: Colors.green,
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                child: TextButton(
+                                                    onPressed: () {},
+                                                    child: Container(
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(Icons.favorite_border, color: Colors.white, size: 18,),
+                                                            SizedBox(width: 5,),
+                                                            Text(userPosts[index].postLikeCnt.toString(), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400))
+                                                          ],
+                                                        )
+                                                    )
+                                                ),
+                                              ),
+                                              TextButton(
+                                                  onPressed: () {},
+                                                  child: Container(
+                                                      child: Row(
+                                                        children: [
+                                                          Icon(Icons.comment, color: Colors.white, size: 18,),
+                                                          SizedBox(width: 5,),
+                                                          Text(userPosts[index].postCommentCnt.toString(), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400))
+                                                        ],
+                                                      )
+                                                  )
+                                              ),
+                                              Spacer(),
+                                              Container(
+                                                // color: Colors.red,
+                                                alignment: Alignment.centerRight,
+                                                child: Text(userPosts[index].postDate),
+                                              )
+                                            ],
+                                          )
+
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                )
+
+
+                            )
+                          ],
+                        )
                     )
-                )
+                ),
               );
             }
         ),

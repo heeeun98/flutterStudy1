@@ -511,7 +511,6 @@ class _TextFormFieldWidgetState extends State<TextFormFieldWidget> {
         // const SizedBox(height: 30),
         const SizedBox(height: 40),
         SizedBox(
-          // decoration: BoxDecoration(border: Border.all(color: Colors.red)),
           width: double.infinity,
           child: Text(widget.title, style: TextStyle(
               color: isSelected ? focusColor : Colors.white,
