@@ -50,7 +50,6 @@ class _LoginActState extends State<LoginAct> {
                           ),
                           bottom: TabBar(
                             labelColor: focusColor,
-                            // labelStyle: const TextStyle(fontSize: 18, letterSpacing: 0.6),
                             labelStyle: const TextStyle(fontSize: 15, letterSpacing: 0.6),
                             tabs: tabs.map((e) => Tab(text: e)).toList(),
                             indicator: BoxDecoration(

@@ -2,7 +2,9 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:heeeun/act/LoginAct.dart';
 import 'package:heeeun/model/User.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:heeeun/model/UserPost.dart';
@@ -103,9 +105,9 @@ class _ProfileActState extends State<ProfileAct> {
         child: Column(
           children: [
             const SizedBox(height: 4),
-            Text(e, style: const TextStyle(fontWeight: FontWeight.w600),),
+            Text(e, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),),
             const SizedBox(height: 6,),
-            Text(e == "Post" ? postCnt.toString() : 0.toString(), style: const TextStyle(fontWeight: FontWeight.w600),)
+            Text(e == "Post" ? postCnt.toString() : 0.toString(), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),)
           ],
         ),
       )
@@ -122,11 +124,9 @@ class _ProfileActState extends State<ProfileAct> {
 
   @override
   Widget build(BuildContext context) {
-    Color focusColor = Theme.of(context).primaryColor;
     Color canvasColor = Theme.of(context).canvasColor;
     double deviceHeight = MediaQuery.of(context).size.height;
-    double deviceWidth = MediaQuery.of(context).size.width;
-    double expandedHeight = deviceHeight * 0.35;
+    double expandedHeight = deviceHeight * 0.4;
 
     return DefaultTabController(
         length: tabs.length,
@@ -153,13 +153,9 @@ class _ProfileActState extends State<ProfileAct> {
                           size: 30,
                         )
                     ),
-                    title: Container(
-                      alignment: Alignment.bottomCenter,
-                      child: Text(appBarTitle, style: TextStyle(letterSpacing: 0.6, fontSize: 25)),
-                    ),
+                    title: Text(appBarTitle, style: const TextStyle(letterSpacing: 0.6, fontSize: 23)),
                     stretch: true,
                     flexibleSpace: FlexibleSpaceBar(
-                      // titlePadding: EdgeInsetsDirectional.only(start: 32, end: 16),
                       stretchModes: const [
                         StretchMode.zoomBackground,
                         StretchMode.blurBackground,
@@ -170,15 +166,17 @@ class _ProfileActState extends State<ProfileAct> {
                         padding: const EdgeInsets.only(left: 10, right: 10),
                         child: Column(
                           children: [
-                            SizedBox(height: expandedHeight * 0.25),
-                            UserInfoWidget(thumbnail: user.thumbnail, nickName: user.nickName, name: user.name, gender: user.gender, country: user.country),
-                            UserCountWidget(likeCount: user.likeCount, followerCount: user.followerCount, followingCount: user.followingCount),
-                            FollowButtonWidget(isFollowing: user.isFollowing, voidCallback: () {
+                            SizedBox(height: expandedHeight * 0.3),
+                            UserInfoWidget(height: expandedHeight * 0.28, thumbnail: user.thumbnail, nickName: user.nickName, name: user.name, gender: user.gender, country: user.country),
+                            SizedBox(height: expandedHeight * 0.01),
+                            UserCountWidget(height: expandedHeight * 0.2, likeCount: user.likeCount, followerCount: user.followerCount, followingCount: user.followingCount),
+                            SizedBox(height: expandedHeight * 0.02),
+                            FollowButtonWidget(height: expandedHeight * 0.13, isFollowing: user.isFollowing, voidCallback: () {
                               setState(() {
                               user.isFollowing = !user.isFollowing;
                               });
                             }),
-                            const SizedBox(height: 40,)
+                            SizedBox(height: expandedHeight * 0.01),
                           ],
                         ),
                       ),
@@ -197,11 +195,11 @@ class _ProfileActState extends State<ProfileAct> {
             body: TabBarView(
                 children: tabs.map((e) {
                   if(e == "Post") {
-                    return UserPostPage(userId: userId, userPosts: userPosts,);
+                    return UserPostPage(userId: userId, userPosts: userPosts);
                   } else if (e == "NFT"){
-                    return NftPage();
+                    return const NftPage();
                   } else {      // Deal
-                    return NftPage();
+                    return const NftPage();
                   }
                 }).toList()
             ),
@@ -214,6 +212,7 @@ class _ProfileActState extends State<ProfileAct> {
 class UserInfoWidget extends StatefulWidget {
   const UserInfoWidget({
     Key? key,
+    required this.height,
     required this.thumbnail,
     required this.nickName,
     required this.name,
@@ -221,6 +220,7 @@ class UserInfoWidget extends StatefulWidget {
     required this.country
   }) : super(key: key);
 
+  final double height;
   final String thumbnail;
   final String nickName;
   final String name;
@@ -237,7 +237,6 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
 
   @override
   Widget build(BuildContext context) {
-
     String genderString;
 
     if (widget.gender == 0) {
@@ -248,51 +247,43 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
       genderString = "그 외";
     }
 
-    return Expanded(
-        flex: 5,
-        child: Container(
-          child: Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ExtendedImage.network(
-                      widget.thumbnail,
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.fill,
-                      border: Border.all(color: Colors.white),
-                      shape: BoxShape.circle,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                flex: 7,
-                child: Container(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        child: Text(widget.nickName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                      ),
-                      SizedBox(
-                        child: Text(widget.name, style: const TextStyle(fontSize: 15, color: Colors.grey)),
-                      ),
-                      SizedBox(
-                        child: Text("$genderString | ${widget.country}", style: const TextStyle(fontSize: 13, color: Colors.red)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+    return Container(
+      height: widget.height,
+      padding: const EdgeInsets.only(top: 10, right: 10),
+      child: Row(
+        children: [
+          SizedBox(
+            height: 75,
+            width: 75,
+            child: ExtendedImage.network(
+              widget.thumbnail,
+              fit: BoxFit.fill,
+              border: Border.all(color: Colors.white),
+              shape: BoxShape.circle,
+              width: 75,
+              height: 75,
+            ),
           ),
-        )
+          const SizedBox(width: 15),
+          Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    child: Text(widget.nickName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  ),
+                  SizedBox(
+                    child: Text(widget.name, style: const TextStyle(fontSize: 15, color: Colors.grey)),
+                  ),
+                  SizedBox(
+                    child: Text("$genderString | ${widget.country}", style: const TextStyle(fontSize: 13, color: Colors.red)),
+                  ),
+                ],
+              )
+          ),
+        ],
+      ),
     );
   }
 }
@@ -301,11 +292,13 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
 class UserCountWidget extends StatefulWidget {
   const UserCountWidget({
     Key? key,
+    required this.height,
     required this.likeCount,
     required this.followerCount,
     required this.followingCount
   }) : super(key: key);
 
+  final double height;
   final int likeCount;
   final int followerCount;
   final int followingCount;
@@ -318,44 +311,48 @@ class UserCountWidget extends StatefulWidget {
 class _UserCountWidgetState extends State<UserCountWidget> {
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      flex: 5,
-      child: Container(
-        // color: Colors.blue,
-        alignment: Alignment.bottomCenter,
-        padding: const EdgeInsets.only(top: 20, bottom: 20),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(widget.likeCount.toString(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
-                const SizedBox(height: 5,),
-                const Text("Like", style: TextStyle(fontSize: 12, color: Colors.grey),)
-              ],
-            ),
-            Container(height: 10, width: 2, color: Colors.black38,),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(widget.followerCount.toString(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 5,),
-                const Text("Followers", style: TextStyle(fontSize: 13, color: Colors.grey))
-              ],
-            ),
-            Container(height: 10, width: 2, color: Colors.black38,),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(widget.followingCount.toString(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 5),
-                const Text("Following", style: TextStyle(fontSize: 12, color: Colors.grey))
-              ],
-            ),
-          ],
-        ),
+    return Container(
+      height: widget.height,
+      alignment: Alignment.topCenter,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Expanded(
+            flex: 1,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(widget.likeCount.toString(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+                  const SizedBox(height: 5,),
+                  const Text("Like", style: TextStyle(fontSize: 12, color: Colors.grey),)
+                ],
+              )
+          ),
+          Container(height: 45, width: 1, color: Colors.black38,),
+          Expanded(
+            flex: 1,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(widget.followerCount.toString(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 5,),
+                  const Text("Followers", style: TextStyle(fontSize: 12, color: Colors.grey))
+                ],
+              )
+          ),
+          Container(height: 45, width: 1, color: Colors.black38,),
+          Expanded(
+            flex: 1,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(widget.followingCount.toString(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 5),
+                  const Text("Following", style: TextStyle(fontSize: 12, color: Colors.grey))
+                ],
+              )
+          )
+        ],
       ),
     );
   }
@@ -366,10 +363,12 @@ class _UserCountWidgetState extends State<UserCountWidget> {
 class FollowButtonWidget extends StatefulWidget {
   const FollowButtonWidget({
     Key? key,
+    required this.height,
     required this.isFollowing,
     required this.voidCallback
   }) : super(key: key);
 
+  final double height;
   final bool isFollowing;
   final VoidCallback voidCallback;
 
@@ -385,19 +384,16 @@ class _FollowButtonWidgetState extends State<FollowButtonWidget> {
     String buttonText = widget.isFollowing ? "Following" : "Follow";
     Color buttonColor = widget.isFollowing ? Colors.white12 : Theme.of(context).primaryColor;
 
-    return Expanded(   // Following/Follow 버튼
-        flex: 4,
-        child: Container(
-          margin: const EdgeInsets.only(top: 5, bottom: 25),
-          width: double.infinity,
-          color: buttonColor,
-          child: TextButton(
-            onPressed: () {
-              widget.voidCallback();
-            },
-            child: Text(buttonText, style: const TextStyle(fontSize: 20, color: Colors.white, letterSpacing: 1)),
-          ),
-        )
+    return Container(
+      height: widget.height,
+      width: double.infinity,
+      color: buttonColor,
+      child: TextButton(
+        onPressed: () {
+          widget.voidCallback();
+        },
+        child: Text(buttonText, style: const TextStyle(fontSize: 18, color: Colors.white, letterSpacing: 1)),
+      ),
     );
   }
 }
@@ -416,10 +412,10 @@ class UserPostPage extends StatefulWidget {
 class _UserPostPageState extends State<UserPostPage> {
   final RefreshController _refreshController = RefreshController(initialRefresh: false);
 
+
   @override
   void initState() {
     super.initState();
-    // getUserPost();
   }
 
   @override
@@ -437,51 +433,29 @@ class _UserPostPageState extends State<UserPostPage> {
     _refreshController.loadComplete();
   }
 
-  // getUserPost() async {
-  //   var dio = Dio(
-  //       BaseOptions(
-  //           baseUrl: "https://pietaserver.azurewebsites.net",
-  //           connectTimeout: 800000,   // 서버로부터 응답받을때까지의 시간을 의미함. 설정 시간을 초과할 경우 connectTimeout Exception 발생
-  //           receiveTimeout: 800000    // 서버로부터 응답을 스트리밍? 으로 받는 중에 연결 지속시간을 의미. 연결 지속시간이 초과될 경우 receiveTimeout Exception 발생. ex) 파일다운로드
-  //       )
-  //   );
-  //
-  //   var response = await dio.get("/post/${widget.userId}", queryParameters: {"page": pageCnt});
-  //
-  //   if(response.statusCode == 200) {
-  //     Map userPostMap = jsonDecode(response.toString());
-  //
-  //     if(userPostMap["list"] != null) {
-  //       userPostMap["list"].forEach((element) {
-  //         UserPost userPost = UserPost.fromJson(element);
-  //         userPosts.add(userPost);
-  //       });
-  //     }
-  //   }
-  //   setState(() {});
-  // }
-
   @override
   Widget build(BuildContext context) {
     // InkWell, GestureDetector: Gesture 을 감지할 수 없는 widget 에게 Gesture 기능을 부여할 수 있는 위젯
     // Gesture: 사용자의 동작(클릭, 터블 클릭, 오래누르기 등) 을 감지하는 것
 
+    double deviceWidth = MediaQuery.of(context).size.width;
+    double deviceHeight = MediaQuery.of(context).size.height;
+
     return Container(
       padding: const EdgeInsets.only(left: 10, right: 10, top: 130),
       width: double.infinity,
       child: SmartRefresher(
-        controller:
-        _refreshController,
+        controller: _refreshController,
         enablePullDown: true,
         enablePullUp: true,
         onRefresh: _onRefresh,
         onLoading: _onLoading,
         child: ListView.builder(
             itemCount: widget.userPosts.length,
+            dragStartBehavior: DragStartBehavior.start,
             itemBuilder: (context, index) {
               return Container(
-                // color: Colors.blue,
-                padding: const EdgeInsets.only(bottom: 30),
+                padding: const EdgeInsets.only(bottom: 30, ),
                 child: InkWell(
                     onTap: () { print("POST 상세 클릭함");},
                     child: ZoomOverlay(
@@ -492,13 +466,13 @@ class _UserPostPageState extends State<UserPostPage> {
                           children: [
                             ExtendedImage.network(
                               widget.userPosts[index].artThumbnail,
-                              fit: BoxFit.cover,
-                              width: 700,
-                              height: 800,
+                              fit: BoxFit.fill,
+                              width: deviceWidth - 20,
+                              height: deviceHeight - ( deviceHeight * 0.4),
                             ),
                             Container(
-                              width: 700,
-                              height: 800,
+                              width: deviceWidth - 20,
+                              height: deviceHeight - ( deviceHeight * 0.4),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                     colors: [Colors.transparent, Colors.transparent, Colors.transparent, Theme.of(context).shadowColor],
@@ -507,56 +481,64 @@ class _UserPostPageState extends State<UserPostPage> {
                               ),
                             ),
                             Positioned(
-                                top: 650,
-                                left: 20,
+                                bottom: 10,
+                                left: 5,
                                 child: IntrinsicWidth(
                                   child: Container(
-                                    width: 650,
+                                    padding: const EdgeInsets.only(left: 5),
                                     child: Column(
                                       children: [
                                         Container(
-                                          padding: EdgeInsets.only(left: 15),
+                                          margin: EdgeInsets.zero,
                                           alignment: Alignment.bottomLeft,
-                                          child: Text(widget.userPosts[index].postTitle, style: const TextStyle(fontSize: 35, color: Colors.white, fontWeight: FontWeight.w600)),
+                                          child: Text(widget.userPosts[index].postTitle, style: const TextStyle(fontSize: 30, color: Colors.white, fontWeight: FontWeight.w600)),
                                         ),
-                                        Container(
-                                          width: double.infinity,
-                                          child: Row(
-                                            children: [
-                                              TextButton(
-                                                  onPressed: () {},
-                                                  child: Row(
-                                                    children: [
-                                                      const Icon(Icons.favorite_border, color: Colors.white, size: 18,),
-                                                      const SizedBox(width: 5,),
-                                                      Text(widget.userPosts[index].postLikeCnt.toString(), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400))
-                                                    ],
-                                                  )
+                                        Row(
+                                          children: [
+                                            TextButton(
+                                              onPressed: () {},
+                                              style: TextButton.styleFrom(
+                                                padding: EdgeInsets.zero,
+                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                alignment: Alignment.centerLeft,
+                                                minimumSize: const Size(50, 30)
                                               ),
-                                              TextButton(
-                                                  onPressed: () {},
-                                                  child: Row(
-                                                    children: [
-                                                      const Icon(Icons.comment, color: Colors.white, size: 18,),
-                                                      const SizedBox(width: 5,),
-                                                      Text(widget.userPosts[index].postCommentCnt.toString(), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400))
-                                                    ],
-                                                  )
+                                              child: Row(
+                                                children: [
+                                                  const Icon(Icons.favorite_border, color: Colors.white, size: 15,),
+                                                  const SizedBox(width: 5,),
+                                                  Text(widget.userPosts[index].postLikeCnt.toString(), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400))
+                                                ],
                                               ),
-                                              const Spacer(),
-                                              Container(
-                                                padding: EdgeInsets.only(right: 15),
-                                                alignment: Alignment.centerRight,
-                                                child: Text(DateFormat("MM월 dd일").format(DateTime.parse(widget.userPosts[index].postDate)), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400)),
-                                              )
-                                            ],
-                                          )
+                                            ),
+                                            TextButton(
+                                                onPressed: () {},
+                                                style: TextButton.styleFrom(
+                                                    padding: EdgeInsets.zero,
+                                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                    alignment: Alignment.centerLeft,
+                                                    minimumSize: const Size(50, 30)
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    const Icon(Icons.comment, color: Colors.white, size: 15,),
+                                                    const SizedBox(width: 5,),
+                                                    Text(widget.userPosts[index].postCommentCnt.toString(), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400))
+                                                  ],
+                                                )
+                                            ),
+                                            const Spacer(),
+                                            Container(
+                                              alignment: Alignment.centerRight,
+                                              child: Text(DateFormat("MM월 dd일").format(DateTime.parse(widget.userPosts[index].postDate)), style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w400)),
+                                            )
+                                          ],
                                         ),
                                         Container(
-                                          height: 1, width: 620, color: Colors.white,
+                                          height: 1, width: deviceWidth - 40, color: Colors.white,
                                         ),
                                         Container(
-                                          padding: EdgeInsets.only(left: 15, top: 10),
+                                          padding: const EdgeInsets.only(top: 10),
                                           alignment: Alignment.bottomLeft,
                                           child: Text(widget.userPosts[index].postContent, style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w500),),
                                         )
@@ -590,5 +572,3 @@ class _NftPageState extends State<NftPage> {
     return Container();
   }
 }
-
-
